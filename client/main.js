@@ -42,15 +42,15 @@ const app = new Vue({
         makeMove(fromRow, fromCol, toRow, toCol) {
             fetch('http://localhost:3000/move', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({gameId: this.gameId, from: {row: fromRow, col: fromCol}, to: {row: toRow, col: toCol}})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gameId: this.gameId, from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } })
             }).then(() => {
-                this.socket.emit('move', {from: {row: fromRow, col: fromCol}, to: {row: toRow, col: toCol}});
+                this.socket.emit('move', { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol } });
                 this.loadState();
             });
         },
         drawPawn() {
-            const newPawn = {type: 'newPawn', hp: 8, passive: 'speed', active: 'dash', special: 'evade'};
+            const newPawn = { type: 'newPawn', hp: 8, passive: 'speed', active: 'dash', special: 'evade' };
             this.playerPawns.push(newPawn);
             const emptyCol = this.board[6].findIndex(cell => !cell);
             if (emptyCol !== -1) this.board[6][emptyCol] = newPawn;
@@ -78,14 +78,16 @@ const app = new Vue({
             <div class="content">
                 <div v-if="selectedTab === 'Jouer'" class="board-container">
                     <div class="board">
-                        <div v-for="row in board" :key="board.indexOf(row)" class="row">
-                            <div v-for="cell in row" :key="row.indexOf(cell)" :class="['cell', (board.indexOf(row) + row.indexOf(cell)) % 2 === 0 ? 'dark' : 'light']" @click="handleCellClick(board.indexOf(row), row.indexOf(cell))">
+                        <div v-for="(row, rowIndex) in board" :key="rowIndex" class="row">
+                            <div v-for="(cell, colIndex) in row" :key="colIndex"
+                                :class="['cell', (rowIndex + colIndex) % 2 === 0 ? 'light' : 'dark']"
+                                @click="handleCellClick(rowIndex, colIndex)">
                                 <div v-if="cell" class="pawn">{{ cell.type }} (HP: {{ cell.hp }})</div>
                             </div>
                         </div>
                     </div>
-                    <button class="battle-button" @click="startGame">Battle</button>
-                </div>
+                <button class="battle-button" @click="startGame">Battle</button>
+            </div>
                 <div v-else style="display: flex; align-items: center; justify-content: center; font-size: clamp(1.5rem, 6vw, 3rem); color: white;">
                     {{ selectedTab }}
                 </div>
