@@ -17,3 +17,23 @@ All commands to execute for first installation:
 
 4. Navigate to the client directory:
    npm i && npm run server
+
+## Tree
+
+├───client
+│   ├───public
+│   └───src
+│       ├───assets
+│       │   └───images
+│       │       ├───avatar
+│       │       │   └───circle
+│       │       ├───background
+│       │       ├───board
+│       │       ├───buttons
+│       │       ├───icons
+│       │       ├───pieces
+│       │       │   ├───blue
+│       │       │   └───red
+│       │       └───xpBar
+│       └───components
+└───server
