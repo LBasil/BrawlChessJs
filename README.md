@@ -26,7 +26,7 @@ All commands to execute for first installation:
 ---
 
 ## 📂 Project Structure
-
+```
 ├── client
 │   ├── public
 │   └── src
@@ -44,3 +44,4 @@ All commands to execute for first installation:
 │       │       └── xpBar
 │       └── components
 └── server
+```
