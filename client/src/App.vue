@@ -1,16 +1,21 @@
 <template>
   <div>
-    <HeaderBar />
+    <HeaderBar v-if="!inGame" />
     <div class="content">
-      <div v-if="selectedTab === 'Jouer'">
+      <template v-if="inGame">
         <ChessBoard :board="board" :onCellClick="handleCellClick" />
-        <BattleButton :onClick="startGame" />
-      </div>
-      <div v-else style="display: flex; align-items: center; justify-content: center; font-size: clamp(1.5rem, 6vw, 3rem); color: white;">
-        {{ selectedTab }}
-      </div>
+      </template>
+      <template v-else>
+        <div v-if="selectedTab === 'Jouer'">
+          <ChessBoard :board="board" :onCellClick="handleCellClick" />
+          <BattleButton :onClick="startGame" />
+        </div>
+        <div v-else style="display: flex; align-items: center; justify-content: center; font-size: clamp(1.5rem, 6vw, 3rem); color: white;">
+          {{ selectedTab }}
+        </div>
+      </template>
     </div>
-    <NavBar :selectedTab="selectedTab" @select="selectTab" />
+    <NavBar v-if="!inGame" :selectedTab="selectedTab" @select="selectTab" />
   </div>
 </template>
 
@@ -32,7 +37,8 @@ export default {
       playerPawns: [],
       opponentPawns: [],
       currentTurn: 'player',
-      selectedTab: 'Jouer'
+      selectedTab: 'Jouer',
+      inGame: false
     }
   },
   created() {
@@ -43,13 +49,13 @@ export default {
     this.socket.on('defeat', () => alert('Defeat!'));
   },
   methods: {
-    startGame() {
-      fetch('http://localhost:3000/start')
-        .then(res => res.json())
-        .then(data => {
-          this.gameId = data.gameId;
-          this.loadState();
-        });
+    async startGame() {
+      // Envoie la requête POST au serveur pour démarrer la partie
+      const res = await fetch('http://localhost:3000/start', { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        this.inGame = true;
+      }
     },
     loadState() {
       fetch(`http://localhost:3000/state?gameId=${this.gameId}`)
@@ -88,7 +94,7 @@ export default {
 
 <style>
 body {
-  background: #1e2a44; /* Bleu foncé, modifie selon ta préférence */
+  background: #1e2a44;
   min-height: 100vh;
   margin: 0;
   font-family: 'Segoe UI', Arial, sans-serif;
