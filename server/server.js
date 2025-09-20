@@ -7,16 +7,12 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
-// État initial du plateau
+// État initial du plateau (seulement pièces rouges)
 let piecePositions = {
   // Triangles rouges sur la première ligne (0-5), sniper rouge à 6, tourelle rouge à 7
   ...Object.fromEntries(Array.from({ length: 6 }, (_, i) => [i, 'red_triangle'])),
   6: 'red_sniper',
-  7: 'red_turret',
-  // Triangles bleus sur la dernière ligne (56-61), sniper bleu à 62, tourelle bleue à 63
-  ...Object.fromEntries(Array.from({ length: 6 }, (_, i) => [56 + i, 'blue_triangle'])),
-  62: 'blue_sniper',
-  63: 'blue_turret'
+  7: 'red_turret'
 };
 
 // Deck pour le joueur 1 (bleu)
@@ -65,6 +61,30 @@ app.post('/move', (req, res) => {
   };
 
   res.json({ message: 'Déplacement effectué', piecePositions });
+});
+
+// POST : Placer une pièce depuis une carte
+app.post('/place', (req, res) => {
+  const { cardType, toIndex } = req.body;
+
+  // Vérifications de base
+  if (!['turret', 'sniper'].includes(cardType)) {
+    return res.status(400).json({ error: 'Type de carte invalide' });
+  }
+  if (typeof toIndex !== 'number' || toIndex < 56 || toIndex > 63) {
+    return res.status(400).json({ error: 'Le placement doit être sur la dernière ligne (indices 56-63)' });
+  }
+  if (piecePositions[toIndex]) {
+    return res.status(400).json({ error: 'La case cible doit être vide' });
+  }
+
+  // Placer la pièce bleue
+  piecePositions = {
+    ...piecePositions,
+    [toIndex]: `blue_${cardType}`
+  };
+
+  res.json({ message: 'Placement effectué', piecePositions });
 });
 
 // Démarrer le serveur

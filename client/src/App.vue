@@ -8,7 +8,8 @@
       <div
         v-for="(card, idx) in deck"
         :key="idx"
-        class="w-32 h-48 bg-white border-2 border-red-500 rounded-lg flex flex-col items-center justify-center p-2"
+        :class="['w-32 h-48 bg-white border-2 rounded-lg flex flex-col items-center justify-center p-2 cursor-pointer', selectedCard === card.type ? 'border-blue-500' : 'border-red-500']"
+        @click="selectCard(card.type)"
       >
         <div class="text-lg font-bold">{{ card.name }}</div>
         <div class="text-sm">HP: {{ card.hp }}</div>
@@ -29,18 +30,44 @@ export default {
   data() {
     return {
       selectedSquare: null,
+      selectedCard: null,
       piecePositions: {},
       deck: []
     };
   },
   methods: {
+    selectCard(type) {
+      this.selectedCard = this.selectedCard === type ? null : type;
+      this.selectedSquare = null; // Réinitialiser la sélection de case si une carte est sélectionnée
+    },
     async handleSquareClick(index) {
-      // Si aucune case n'est sélectionnée et la case cliquée a un triangle ou sniper bleu
-      if (this.selectedSquare === null && this.piecePositions[index]?.startsWith('blue_')) {
-        this.selectedSquare = index;
+      // Si une carte est sélectionnée et la case est vide
+      if (this.selectedCard && !this.piecePositions[index]) {
+        try {
+          const response = await fetch('http://localhost:3000/place', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ cardType: this.selectedCard, toIndex: index })
+          });
+          const data = await response.json();
+          if (response.ok) {
+            this.piecePositions = data.piecePositions;
+            this.selectedCard = null;
+          } else {
+            console.error(data.error);
+            this.selectedCard = null;
+          }
+        } catch (error) {
+          console.error('Erreur lors du placement:', error);
+          this.selectedCard = null;
+        }
       }
-      // Si une case est sélectionnée et la case cliquée est vide
-      else if (this.selectedSquare !== null && !this.piecePositions[index]) {
+      // Logique de déplacement existante
+      else if (this.selectedSquare === null && this.piecePositions[index]?.startsWith('blue_')) {
+        this.selectedSquare = index;
+      } else if (this.selectedSquare !== null && !this.piecePositions[index]) {
         try {
           const response = await fetch('http://localhost:3000/move', {
             method: 'POST',
@@ -61,9 +88,7 @@ export default {
           console.error('Erreur lors du déplacement:', error);
           this.selectedSquare = null;
         }
-      }
-      // Réinitialiser si la case cliquée n'est pas valide
-      else {
+      } else {
         this.selectedSquare = null;
       }
     },
