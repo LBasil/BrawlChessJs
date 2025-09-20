@@ -1,7 +1,7 @@
 <template>
   <div class="flex justify-center items-center min-h-screen bg-gray-100">
     <ChessBoard
-      :trianglePositions="trianglePositions"
+      :piecePositions="piecePositions"
       @square-click="handleSquareClick"
     />
   </div>
@@ -18,17 +18,17 @@ export default {
   data() {
     return {
       selectedSquare: null,
-      trianglePositions: {}
+      piecePositions: {}
     };
   },
   methods: {
     async handleSquareClick(index) {
-      // Si aucune case n'est sélectionnée et la case cliquée a un triangle bleu
-      if (this.selectedSquare === null && this.trianglePositions[index] === 'blue') {
+      // Si aucune case n'est sélectionnée et la case cliquée a un triangle ou sniper bleu
+      if (this.selectedSquare === null && this.piecePositions[index]?.startsWith('blue_')) {
         this.selectedSquare = index;
       }
       // Si une case est sélectionnée et la case cliquée est vide
-      else if (this.selectedSquare !== null && !this.trianglePositions[index]) {
+      else if (this.selectedSquare !== null && !this.piecePositions[index]) {
         try {
           const response = await fetch('http://localhost:3000/move', {
             method: 'POST',
@@ -39,7 +39,7 @@ export default {
           });
           const data = await response.json();
           if (response.ok) {
-            this.trianglePositions = data.trianglePositions;
+            this.piecePositions = data.piecePositions;
             this.selectedSquare = null;
           } else {
             console.error(data.error);
@@ -59,7 +59,7 @@ export default {
       try {
         const response = await fetch('http://localhost:3000/board');
         const data = await response.json();
-        this.trianglePositions = data;
+        this.piecePositions = data;
       } catch (error) {
         console.error('Erreur lors de la récupération du plateau:', error);
       }

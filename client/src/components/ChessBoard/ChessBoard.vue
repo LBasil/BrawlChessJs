@@ -5,7 +5,7 @@
       :key="index"
       :isBlack="(Math.floor(index / 8) + index) % 2 === 1"
       :index="index"
-      :triangleColor="trianglePositions[index]"
+      :piece="piecePositions[index]"
       @click="$emit('square-click', index)"
     />
   </div>
@@ -20,7 +20,7 @@ export default {
     ChessSquare
   },
   props: {
-    trianglePositions: {
+    piecePositions: {
       type: Object,
       default: () => ({})
     }
