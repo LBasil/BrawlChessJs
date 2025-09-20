@@ -19,9 +19,15 @@ let piecePositions = {
   63: 'blue_turret'
 };
 
-// GET : Récupérer l'état du plateau
+// Deck pour le joueur 1 (bleu)
+const playerDeck = [
+  { type: 'turret', name: 'Tourelle', hp: 100, damage: 20 },
+  { type: 'sniper', name: 'Sniper', hp: 50, damage: 30 }
+];
+
+// GET : Récupérer l'état du plateau et le deck
 app.get('/board', (req, res) => {
-  res.json(piecePositions);
+  res.json({ piecePositions, deck: playerDeck });
 });
 
 // POST : Déplacer un triangle ou un sniper

@@ -1,9 +1,20 @@
 <template>
-  <div class="flex justify-center items-center min-h-screen bg-gray-100">
+  <div class="flex flex-col justify-center items-center min-h-screen bg-gray-100">
     <ChessBoard
       :piecePositions="piecePositions"
       @square-click="handleSquareClick"
     />
+    <div class="flex mt-4 space-x-4">
+      <div
+        v-for="(card, idx) in deck"
+        :key="idx"
+        class="w-32 h-48 bg-white border-2 border-red-500 rounded-lg flex flex-col items-center justify-center p-2"
+      >
+        <div class="text-lg font-bold">{{ card.name }}</div>
+        <div class="text-sm">HP: {{ card.hp }}</div>
+        <div class="text-sm">Dégâts: {{ card.damage }}</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -18,7 +29,8 @@ export default {
   data() {
     return {
       selectedSquare: null,
-      piecePositions: {}
+      piecePositions: {},
+      deck: []
     };
   },
   methods: {
@@ -59,14 +71,15 @@ export default {
       try {
         const response = await fetch('http://localhost:3000/board');
         const data = await response.json();
-        this.piecePositions = data;
+        this.piecePositions = data.piecePositions;
+        this.deck = data.deck;
       } catch (error) {
         console.error('Erreur lors de la récupération du plateau:', error);
       }
     }
   },
   mounted() {
-    // Charger l'état initial du plateau
+    // Charger l'état initial du plateau et le deck
     this.fetchBoardState();
   }
 }
