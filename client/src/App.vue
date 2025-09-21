@@ -1,9 +1,20 @@
 <template>
   <div class="flex flex-col justify-center items-center min-h-screen bg-gray-100">
+    <!-- Cartes de l'adversaire (rouge) affichées de dos au-dessus -->
+    <div class="flex mb-4 space-x-4">
+      <div
+        v-for="card in filteredEnemyDeck"
+        :key="card.type"
+        class="w-32 h-48 bg-gray-400 border-2 border-red-500 rounded-lg flex items-center justify-center p-2"
+      >
+        <div class="text-sm">Restant: {{ card.quantity }}</div>
+      </div>
+    </div>
     <ChessBoard
       :piecePositions="piecePositions"
       @square-click="handleSquareClick"
     />
+    <!-- Cartes du joueur 1 (bleu) -->
     <div class="flex mt-4 space-x-4">
       <div
         v-for="card in filteredDeck"
@@ -33,12 +44,16 @@ export default {
       selectedSquare: null,
       selectedCard: null,
       piecePositions: {},
-      deck: {}
+      deck: {},
+      enemyDeck: {}
     };
   },
   computed: {
     filteredDeck() {
       return Object.values(this.deck).filter(card => card.quantity > 0);
+    },
+    filteredEnemyDeck() {
+      return Object.values(this.enemyDeck).filter(card => card.quantity > 0);
     }
   },
   methods: {
@@ -49,7 +64,7 @@ export default {
     async handleSquareClick(index) {
       if (this.selectedCard && !this.piecePositions[index]) {
         try {
-          const response = await fetch('http://localhost:3000/place', {
+          const response = await fetch(`http://localhost:3000/place-player1`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -59,7 +74,7 @@ export default {
           const data = await response.json();
           if (response.ok) {
             this.piecePositions = data.piecePositions;
-            this.deck = data.deck;
+            this.deck = data.player1Deck;
             this.selectedCard = null;
           } else {
             console.error(data.error);
@@ -101,7 +116,8 @@ export default {
         const response = await fetch('http://localhost:3000/board');
         const data = await response.json();
         this.piecePositions = data.piecePositions;
-        this.deck = data.deck;
+        this.deck = data.player1Deck;
+        this.enemyDeck = data.player2Deck;
       } catch (error) {
         console.error('Erreur lors de la récupération du plateau:', error);
       }

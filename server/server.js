@@ -7,26 +7,27 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
-// État initial du plateau (seulement pièces rouges)
-let piecePositions = {
-  // Triangles rouges sur la première ligne (0-5), sniper rouge à 6, tourelle rouge à 7
-  ...Object.fromEntries(Array.from({ length: 6 }, (_, i) => [i, 'red_triangle'])),
-  6: 'red_sniper',
-  7: 'red_turret'
-};
+// État initial du plateau (vide pour les deux joueurs)
+let piecePositions = {};
 
-// Deck pour le joueur 1 (bleu) avec quantités
-let playerDeck = {
+// Deck pour le joueur 1 (bleu)
+let player1Deck = {
   turret: { type: 'turret', name: 'Tourelle', hp: 100, damage: 20, quantity: 1 },
   sniper: { type: 'sniper', name: 'Sniper', hp: 50, damage: 30, quantity: 3 }
 };
 
-// GET : Récupérer l'état du plateau et le deck
+// Deck pour l'adversaire (rouge)
+let player2Deck = {
+  turret: { type: 'turret', name: 'Tourelle', hp: 100, damage: 20, quantity: 1 },
+  sniper: { type: 'sniper', name: 'Sniper', hp: 50, damage: 30, quantity: 3 }
+};
+
+// GET : Récupérer l'état du plateau et les decks
 app.get('/board', (req, res) => {
-  res.json({ piecePositions, deck: playerDeck });
+  res.json({ piecePositions, player1Deck, player2Deck });
 });
 
-// POST : Déplacer un triangle ou un sniper
+// POST : Déplacer une pièce
 app.post('/move', (req, res) => {
   const { fromIndex, toIndex } = req.body;
 
@@ -60,8 +61,8 @@ app.post('/move', (req, res) => {
   res.json({ message: 'Déplacement effectué', piecePositions });
 });
 
-// POST : Placer une pièce depuis une carte
-app.post('/place', (req, res) => {
+// POST : Placer une pièce depuis une carte pour le joueur 1 (bleu)
+app.post('/place-player1', (req, res) => {
   const { cardType, toIndex } = req.body;
 
   if (!['turret', 'sniper'].includes(cardType)) {
@@ -73,7 +74,7 @@ app.post('/place', (req, res) => {
   if (piecePositions[toIndex]) {
     return res.status(400).json({ error: 'La case cible doit être vide' });
   }
-  if (playerDeck[cardType].quantity <= 0) {
+  if (player1Deck[cardType].quantity <= 0) {
     return res.status(400).json({ error: 'Plus de cartes disponibles pour ce type' });
   }
 
@@ -81,9 +82,35 @@ app.post('/place', (req, res) => {
     ...piecePositions,
     [toIndex]: `blue_${cardType}`
   };
-  playerDeck[cardType].quantity -= 1;
+  player1Deck[cardType].quantity -= 1;
 
-  res.json({ message: 'Placement effectué', piecePositions, deck: playerDeck });
+  res.json({ message: 'Placement effectué', piecePositions, player1Deck });
+});
+
+// POST : Placer une pièce depuis une carte pour l'adversaire (rouge)
+app.post('/place-player2', (req, res) => {
+  const { cardType, toIndex } = req.body;
+
+  if (!['turret', 'sniper'].includes(cardType)) {
+    return res.status(400).json({ error: 'Type de carte invalide' });
+  }
+  if (typeof toIndex !== 'number' || toIndex < 0 || toIndex > 23) {
+    return res.status(400).json({ error: 'Le placement doit être sur les trois premières lignes (indices 0-23)' });
+  }
+  if (piecePositions[toIndex]) {
+    return res.status(400).json({ error: 'La case cible doit être vide' });
+  }
+  if (player2Deck[cardType].quantity <= 0) {
+    return res.status(400).json({ error: 'Plus de cartes disponibles pour ce type' });
+  }
+
+  piecePositions = {
+    ...piecePositions,
+    [toIndex]: `red_${cardType}`
+  };
+  player2Deck[cardType].quantity -= 1;
+
+  res.json({ message: 'Placement effectué', piecePositions, player2Deck });
 });
 
 // Démarrer le serveur
