@@ -1,5 +1,9 @@
 <template>
   <div class="flex flex-col justify-center items-center min-h-screen bg-gray-100">
+    <!-- Indicateur de tour -->
+    <div class="text-xl font-bold mb-4">
+      Tour : {{ currentTurn === 'player1' ? 'Joueur 1' : 'Ennemi' }}
+    </div>
     <!-- Cartes de l'adversaire (rouge) affichées de dos au-dessus -->
     <div class="flex mb-4 space-x-4">
       <div
@@ -45,7 +49,8 @@ export default {
       selectedCard: null,
       piecePositions: {},
       deck: {},
-      enemyDeck: {}
+      enemyDeck: {},
+      currentTurn: 'player1'
     };
   },
   computed: {
@@ -75,6 +80,7 @@ export default {
           if (response.ok) {
             this.piecePositions = data.piecePositions;
             this.deck = data.player1Deck;
+            this.currentTurn = data.currentTurn;
             this.selectedCard = null;
           } else {
             console.error(data.error);
@@ -98,6 +104,7 @@ export default {
           const data = await response.json();
           if (response.ok) {
             this.piecePositions = data.piecePositions;
+            this.currentTurn = data.currentTurn;
             this.selectedSquare = null;
           } else {
             console.error(data.error);
@@ -118,6 +125,7 @@ export default {
         this.piecePositions = data.piecePositions;
         this.deck = data.player1Deck;
         this.enemyDeck = data.player2Deck;
+        this.currentTurn = data.currentTurn;
       } catch (error) {
         console.error('Erreur lors de la récupération du plateau:', error);
       }

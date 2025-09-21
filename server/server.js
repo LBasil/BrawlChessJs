@@ -22,14 +22,21 @@ let player2Deck = {
   sniper: { type: 'sniper', name: 'Sniper', hp: 50, damage: 30, quantity: 3 }
 };
 
+// Tour actuel
+let currentTurn = 'player1';
+
 // GET : Récupérer l'état du plateau et les decks
 app.get('/board', (req, res) => {
-  res.json({ piecePositions, player1Deck, player2Deck });
+  res.json({ piecePositions, player1Deck, player2Deck, currentTurn });
 });
 
 // POST : Déplacer une pièce
 app.post('/move', (req, res) => {
   const { fromIndex, toIndex } = req.body;
+
+  if (currentTurn !== 'player1') {
+    return res.status(400).json({ error: 'Ce n\'est pas votre tour' });
+  }
 
   if (typeof fromIndex !== 'number' || typeof toIndex !== 'number') {
     return res.status(400).json({ error: 'Les indices doivent être des nombres' });
@@ -37,8 +44,8 @@ app.post('/move', (req, res) => {
   if (fromIndex < 0 || fromIndex > 63 || toIndex < 0 || toIndex > 63) {
     return res.status(400).json({ error: 'Indices hors du plateau' });
   }
-  if (!piecePositions[fromIndex] || piecePositions[fromIndex].endsWith('_turret')) {
-    return res.status(400).json({ error: 'La case source doit contenir un triangle ou un sniper (tourelle immobile)' });
+  if (!piecePositions[fromIndex] || !piecePositions[fromIndex].startsWith('blue_') || piecePositions[fromIndex].endsWith('_turret')) {
+    return res.status(400).json({ error: 'La case source doit contenir une pièce bleue mobile (tourelle immobile)' });
   }
   if (piecePositions[toIndex]) {
     return res.status(400).json({ error: 'La case cible doit être vide' });
@@ -58,12 +65,21 @@ app.post('/move', (req, res) => {
     [toIndex]: piecePositions[fromIndex]
   };
 
-  res.json({ message: 'Déplacement effectué', piecePositions });
+  // Passer au tour de l'ennemi, puis pass auto
+  currentTurn = 'player2';
+  // Simulation pass auto pour l'ennemi
+  currentTurn = 'player1';
+
+  res.json({ message: 'Déplacement effectué', piecePositions, currentTurn });
 });
 
 // POST : Placer une pièce depuis une carte pour le joueur 1 (bleu)
 app.post('/place-player1', (req, res) => {
   const { cardType, toIndex } = req.body;
+
+  if (currentTurn !== 'player1') {
+    return res.status(400).json({ error: 'Ce n\'est pas votre tour' });
+  }
 
   if (!['turret', 'sniper'].includes(cardType)) {
     return res.status(400).json({ error: 'Type de carte invalide' });
@@ -84,12 +100,21 @@ app.post('/place-player1', (req, res) => {
   };
   player1Deck[cardType].quantity -= 1;
 
-  res.json({ message: 'Placement effectué', piecePositions, player1Deck });
+  // Passer au tour de l'ennemi, puis pass auto
+  currentTurn = 'player2';
+  // Simulation pass auto pour l'ennemi
+  currentTurn = 'player1';
+
+  res.json({ message: 'Placement effectué', piecePositions, player1Deck, currentTurn });
 });
 
-// POST : Placer une pièce depuis une carte pour l'adversaire (rouge)
+// POST : Placer une pièce depuis une carte pour l'adversaire (rouge) - non utilisé pour le moment
 app.post('/place-player2', (req, res) => {
   const { cardType, toIndex } = req.body;
+
+  if (currentTurn !== 'player2') {
+    return res.status(400).json({ error: 'Ce n\'est pas le tour de l\'ennemi' });
+  }
 
   if (!['turret', 'sniper'].includes(cardType)) {
     return res.status(400).json({ error: 'Type de carte invalide' });
@@ -110,7 +135,7 @@ app.post('/place-player2', (req, res) => {
   };
   player2Deck[cardType].quantity -= 1;
 
-  res.json({ message: 'Placement effectué', piecePositions, player2Deck });
+  res.json({ message: 'Placement effectué', piecePositions, player2Deck, currentTurn });
 });
 
 // Démarrer le serveur
