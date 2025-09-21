@@ -15,11 +15,11 @@ let piecePositions = {
   7: 'red_turret'
 };
 
-// Deck pour le joueur 1 (bleu)
-const playerDeck = [
-  { type: 'turret', name: 'Tourelle', hp: 100, damage: 20 },
-  { type: 'sniper', name: 'Sniper', hp: 50, damage: 30 }
-];
+// Deck pour le joueur 1 (bleu) avec quantités
+let playerDeck = {
+  turret: { type: 'turret', name: 'Tourelle', hp: 100, damage: 20, quantity: 1 },
+  sniper: { type: 'sniper', name: 'Sniper', hp: 50, damage: 30, quantity: 3 }
+};
 
 // GET : Récupérer l'état du plateau et le deck
 app.get('/board', (req, res) => {
@@ -30,7 +30,6 @@ app.get('/board', (req, res) => {
 app.post('/move', (req, res) => {
   const { fromIndex, toIndex } = req.body;
 
-  // Vérifications de base
   if (typeof fromIndex !== 'number' || typeof toIndex !== 'number') {
     return res.status(400).json({ error: 'Les indices doivent être des nombres' });
   }
@@ -44,7 +43,6 @@ app.post('/move', (req, res) => {
     return res.status(400).json({ error: 'La case cible doit être vide' });
   }
 
-  // Vérification pour les snipers : déplacement uniquement sur la même ligne
   if (piecePositions[fromIndex].endsWith('_sniper')) {
     const fromRow = Math.floor(fromIndex / 8);
     const toRow = Math.floor(toIndex / 8);
@@ -53,7 +51,6 @@ app.post('/move', (req, res) => {
     }
   }
 
-  // Mettre à jour l'état du plateau
   piecePositions = {
     ...piecePositions,
     [fromIndex]: null,
@@ -67,24 +64,26 @@ app.post('/move', (req, res) => {
 app.post('/place', (req, res) => {
   const { cardType, toIndex } = req.body;
 
-  // Vérifications de base
   if (!['turret', 'sniper'].includes(cardType)) {
     return res.status(400).json({ error: 'Type de carte invalide' });
   }
-  if (typeof toIndex !== 'number' || toIndex < 56 || toIndex > 63) {
-    return res.status(400).json({ error: 'Le placement doit être sur la dernière ligne (indices 56-63)' });
+  if (typeof toIndex !== 'number' || toIndex < 40 || toIndex > 63) {
+    return res.status(400).json({ error: 'Le placement doit être sur les trois dernières lignes (indices 40-63)' });
   }
   if (piecePositions[toIndex]) {
     return res.status(400).json({ error: 'La case cible doit être vide' });
   }
+  if (playerDeck[cardType].quantity <= 0) {
+    return res.status(400).json({ error: 'Plus de cartes disponibles pour ce type' });
+  }
 
-  // Placer la pièce bleue
   piecePositions = {
     ...piecePositions,
     [toIndex]: `blue_${cardType}`
   };
+  playerDeck[cardType].quantity -= 1;
 
-  res.json({ message: 'Placement effectué', piecePositions });
+  res.json({ message: 'Placement effectué', piecePositions, deck: playerDeck });
 });
 
 // Démarrer le serveur

@@ -6,14 +6,15 @@
     />
     <div class="flex mt-4 space-x-4">
       <div
-        v-for="(card, idx) in deck"
-        :key="idx"
+        v-for="card in filteredDeck"
+        :key="card.type"
         :class="['w-32 h-48 bg-white border-2 rounded-lg flex flex-col items-center justify-center p-2 cursor-pointer', selectedCard === card.type ? 'border-blue-500' : 'border-red-500']"
         @click="selectCard(card.type)"
       >
         <div class="text-lg font-bold">{{ card.name }}</div>
         <div class="text-sm">HP: {{ card.hp }}</div>
         <div class="text-sm">Dégâts: {{ card.damage }}</div>
+        <div class="text-sm">Restant: {{ card.quantity }}</div>
       </div>
     </div>
   </div>
@@ -32,16 +33,20 @@ export default {
       selectedSquare: null,
       selectedCard: null,
       piecePositions: {},
-      deck: []
+      deck: {}
     };
+  },
+  computed: {
+    filteredDeck() {
+      return Object.values(this.deck).filter(card => card.quantity > 0);
+    }
   },
   methods: {
     selectCard(type) {
       this.selectedCard = this.selectedCard === type ? null : type;
-      this.selectedSquare = null; // Réinitialiser la sélection de case si une carte est sélectionnée
+      this.selectedSquare = null;
     },
     async handleSquareClick(index) {
-      // Si une carte est sélectionnée et la case est vide
       if (this.selectedCard && !this.piecePositions[index]) {
         try {
           const response = await fetch('http://localhost:3000/place', {
@@ -54,6 +59,7 @@ export default {
           const data = await response.json();
           if (response.ok) {
             this.piecePositions = data.piecePositions;
+            this.deck = data.deck;
             this.selectedCard = null;
           } else {
             console.error(data.error);
@@ -63,9 +69,7 @@ export default {
           console.error('Erreur lors du placement:', error);
           this.selectedCard = null;
         }
-      }
-      // Logique de déplacement existante
-      else if (this.selectedSquare === null && this.piecePositions[index]?.startsWith('blue_')) {
+      } else if (this.selectedSquare === null && this.piecePositions[index]?.startsWith('blue_')) {
         this.selectedSquare = index;
       } else if (this.selectedSquare !== null && !this.piecePositions[index]) {
         try {
@@ -104,7 +108,6 @@ export default {
     }
   },
   mounted() {
-    // Charger l'état initial du plateau et le deck
     this.fetchBoardState();
   }
 }
