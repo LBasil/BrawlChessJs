@@ -9,7 +9,8 @@
       <div
         v-for="card in filteredEnemyDeck"
         :key="card.type"
-        class="w-32 h-48 bg-gray-400 border-2 border-red-500 rounded-lg flex items-center justify-center p-2"
+        class="w-32 h-48 bg-gray-400 border-2 border-red-500 rounded-lg flex items-center justify-center p-2 transition-opacity duration-300"
+        :style="{ opacity: card.quantity > 0 ? 1 : 0 }"
       >
         <div class="text-sm">Restant: {{ card.quantity }}</div>
       </div>
@@ -80,6 +81,7 @@ export default {
           if (response.ok) {
             this.piecePositions = data.piecePositions;
             this.deck = data.player1Deck;
+            this.enemyDeck = data.player2Deck; // Mettre à jour le deck de l'ennemi
             this.currentTurn = data.currentTurn;
             this.selectedCard = null;
           } else {

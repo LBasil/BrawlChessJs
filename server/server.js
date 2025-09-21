@@ -25,6 +25,42 @@ let player2Deck = {
 // Tour actuel
 let currentTurn = 'player1';
 
+// Fonction pour l'IA (player2) : placer une pièce ou bouger une pièce
+function aiAction() {
+  // Vérifier si l'IA peut placer une pièce
+  const availableCards = Object.keys(player2Deck).filter(type => player2Deck[type].quantity > 0);
+  const possiblePlacementIndices = Array.from({ length: 24 }, (_, i) => i).filter(i => !piecePositions[i]);
+  let placed = false;
+
+  if (availableCards.length > 0 && possiblePlacementIndices.length > 0) {
+    const cardType = availableCards[Math.floor(Math.random() * availableCards.length)];
+    const toIndex = possiblePlacementIndices[Math.floor(Math.random() * possiblePlacementIndices.length)];
+    piecePositions[toIndex] = `red_${cardType}`;
+    player2Deck[cardType].quantity -= 1;
+    placed = true;
+  }
+
+  // Si pas de placement ou après placement, tenter un déplacement
+  if (!placed || Math.random() < 0.5) { // 50% de chance de tenter un déplacement
+    const movablePieces = Object.entries(piecePositions)
+      .filter(([_, piece]) => piece && piece.startsWith('red_') && !piece.endsWith('_turret'))
+      .map(([index]) => parseInt(index));
+    if (movablePieces.length > 0) {
+      const fromIndex = movablePieces[Math.floor(Math.random() * movablePieces.length)];
+      const possibleMoveIndices = Array.from({ length: 64 }, (_, i) => i)
+        .filter(i => !piecePositions[i] && (piecePositions[fromIndex].endsWith('_sniper') ? Math.floor(fromIndex / 8) === Math.floor(i / 8) : true));
+      if (possibleMoveIndices.length > 0) {
+        const toIndex = possibleMoveIndices[Math.floor(Math.random() * possibleMoveIndices.length)];
+        piecePositions = {
+          ...piecePositions,
+          [fromIndex]: null,
+          [toIndex]: piecePositions[fromIndex]
+        };
+      }
+    }
+  }
+}
+
 // GET : Récupérer l'état du plateau et les decks
 app.get('/board', (req, res) => {
   res.json({ piecePositions, player1Deck, player2Deck, currentTurn });
@@ -65,12 +101,14 @@ app.post('/move', (req, res) => {
     [toIndex]: piecePositions[fromIndex]
   };
 
-  // Passer au tour de l'ennemi, puis pass auto
+  // Passer au tour de l'ennemi
   currentTurn = 'player2';
-  // Simulation pass auto pour l'ennemi
+  // Action IA
+  aiAction();
+  // Retourner au tour du joueur 1
   currentTurn = 'player1';
 
-  res.json({ message: 'Déplacement effectué', piecePositions, currentTurn });
+  res.json({ message: 'Déplacement effectué', piecePositions, player2Deck, currentTurn });
 });
 
 // POST : Placer une pièce depuis une carte pour le joueur 1 (bleu)
@@ -100,12 +138,14 @@ app.post('/place-player1', (req, res) => {
   };
   player1Deck[cardType].quantity -= 1;
 
-  // Passer au tour de l'ennemi, puis pass auto
+  // Passer au tour de l'ennemi
   currentTurn = 'player2';
-  // Simulation pass auto pour l'ennemi
+  // Action IA
+  aiAction();
+  // Retourner au tour du joueur 1
   currentTurn = 'player1';
 
-  res.json({ message: 'Placement effectué', piecePositions, player1Deck, currentTurn });
+  res.json({ message: 'Placement effectué', piecePositions, player1Deck, player2Deck, currentTurn });
 });
 
 // POST : Placer une pièce depuis une carte pour l'adversaire (rouge) - non utilisé pour le moment
